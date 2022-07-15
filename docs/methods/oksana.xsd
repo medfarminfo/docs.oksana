@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns="http://www.olekstra.ru/schema/oksana" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:altova="http://www.altova.com/xml-schema-extensions" targetNamespace="http://www.olekstra.ru/schema/oksana" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.4.220715">
+	<xs:simpleType name="nonEmptyString">
+		<xs:annotation>
+			<xs:documentation>Непустая строка</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:minLength value="1"/>
+			<xs:whiteSpace value="collapse"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="cardNumber">
+		<xs:annotation>
+			<xs:documentation>Номер купона/карты</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="nonEmptyString"/>
+	</xs:simpleType>
+	<xs:simpleType name="money">
+		<xs:annotation>
+			<xs:documentation>Денежнная сумма</xs:documentation>
+			<xs:appinfo>
+				<altova:exampleValues>
+					<altova:example value="123"/>
+					<altova:example value="123.45"/>
+				</altova:exampleValues>
+			</xs:appinfo>
+		</xs:annotation>
+		<xs:restriction base="xs:decimal">
+			<xs:fractionDigits value="2"/>
+			<xs:minInclusive value="0"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="phoneNumber">
+		<xs:annotation>
+			<xs:documentation>Номер телефона (+7 и далее 10 цифр)</xs:documentation>
+			<xs:appinfo>
+				<altova:exampleValues>
+					<altova:example value="+79261234567"/>
+				</altova:exampleValues>
+			</xs:appinfo>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:pattern value="\+7\d{10}"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:element name="cardStatusRequest">
+		<xs:annotation>
+			<xs:documentation>Запрос на проверку статуса карты</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="number" type="cardNumber" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="cardStatus">
+		<xs:annotation>
+			<xs:documentation>Ответ на проверку статуса карты</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="status" type="xs:boolean">
+					<xs:annotation>
+						<xs:documentation>true если номер действителен и активен, false елси иначе</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="statusText" type="nonEmptyString" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Комментарий "для пользователя" в случае если status=false (краткое объяснение почему номер нерабочий)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="discountPlanId" type="nonEmptyString" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Идентификатор "тарифного плана" карты (т.е. набора товаров, на которые карта дает скидку)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="number" type="cardNumber" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="orderUpdate">
+		<xs:annotation>
+			<xs:documentation>Обновление информации по заказу</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="orderId" type="nonEmptyString"/>
+				<xs:element name="created" type="xs:dateTime">
+					<xs:annotation>
+						<xs:documentation>Дата и время первоначального создания заказа</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="updated" type="xs:dateTime">
+					<xs:annotation>
+						<xs:documentation>Дата и время последнего изменения заказа</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="cardNumber" type="cardNumber" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Номер карты/купона (отсутствует для неавторизуемых сделок)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="phoneNumber" type="phoneNumber">
+					<xs:annotation>
+						<xs:documentation>Телефон покупателя</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="rows">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="row" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="rowId" type="nonEmptyString">
+											<xs:annotation>
+												<xs:documentation>id строки заказа</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="skuId" type="nonEmptyString">
+											<xs:annotation>
+												<xs:documentation>id товара по базе партнера</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="skuName" type="nonEmptyString">
+											<xs:annotation>
+												<xs:documentation>Наименование товара по базе партнера</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="preorder" type="xs:boolean">
+											<xs:annotation>
+												<xs:documentation>'true', если товар "под заказ" (т.е. его доставка еще не подтверждена)</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="quantity">
+											<xs:annotation>
+												<xs:documentation>Количество упаковок</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:int">
+													<xs:minInclusive value="1"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element name="price" type="money">
+											<xs:annotation>
+												<xs:documentation>Цена за одну упаковку</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="discountPerItem" type="money">
+											<xs:annotation>
+												<xs:documentation>Скидка на одну упаковку</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="otherDiscounts" type="money" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Другие скидки (невозмещаемые)</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="sumToPay" type="money">
+											<xs:annotation>
+												<xs:documentation>(quantity * (price - discountPerItem)) - otherDiscounts</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="status">
+											<xs:annotation>
+												<xs:documentation>Одно из предопределенных значений</xs:documentation>
+											</xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="nonEmptyString">
+													<xs:enumeration value="processing"/>
+													<xs:enumeration value="preparing"/>
+													<xs:enumeration value="ready"/>
+													<xs:enumeration value="purchased"/>
+													<xs:enumeration value="cancelled"/>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element name="statusText" type="nonEmptyString">
+											<xs:annotation>
+												<xs:documentation>Наименование статуса "как на сайте"</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+										<xs:element name="purchased" type="xs:dateTime" minOccurs="0">
+											<xs:annotation>
+												<xs:documentation>Дата и время выкупа товара покупателем</xs:documentation>
+											</xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="deliveryPoint" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="id" type="nonEmptyString">
+								<xs:annotation>
+									<xs:documentation>Внутр. идентификатор аптеки в системе учета заказов</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="name" type="nonEmptyString">
+								<xs:annotation>
+									<xs:documentation>Наименование (бренд) аптеки</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="region" type="nonEmptyString" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Регион (РФ), где расположена аптека</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="address" type="nonEmptyString">
+								<xs:annotation>
+									<xs:documentation>Адрес (полный), чтобы покупатель смог найти</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="latitude" type="xs:float" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Широта</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="longitude" type="xs:float" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Долгота</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="phones" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Контактный телефон (для покупателей)</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="openHours" type="xs:string" minOccurs="0">
+								<xs:annotation>
+									<xs:documentation>Часы работы</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="orderUpdateResult">
+		<xs:annotation>
+			<xs:documentation>Ответ на обновление информации по заказу</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="status" type="xs:boolean">
+					<xs:annotation>
+						<xs:documentation>true в случае если информация успешно принята</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="statusText" type="nonEmptyString" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Зарезервировано на будущее. Описание причин неуспеха в случае если status=false</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="phoneCardRequest">
+		<xs:annotation>
+			<xs:documentation>Запрос на получение номера карты для телефона</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="phone" type="phoneNumber" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="phoneCard">
+		<xs:annotation>
+			<xs:documentation>Ответ с номером карты для запрошенного телефона</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="status" type="xs:boolean">
+					<xs:annotation>
+						<xs:documentation>true если для указанного номера была найдена/сформирована карта</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="statusText" type="nonEmptyString" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Комментарий "для пользователя" в случае если status=false (краткое объяснение почему нет карты)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:sequence minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Полезные данные (в случае status=true)</xs:documentation>
+					</xs:annotation>
+					<xs:element name="card" type="cardNumber">
+						<xs:annotation>
+							<xs:documentation>Номер карты</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="discountPlanId" type="nonEmptyString">
+						<xs:annotation>
+							<xs:documentation>Идентификатор "тарифного плана" карты</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:sequence>
+			<xs:attribute name="phone" type="phoneNumber" use="required"/>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
